@@ -1,9 +1,10 @@
-from flask import Flask, make_response, render_template, send_from_directory, jsonify, request
+from flask import Flask, make_response, render_template, send_from_directory, jsonify, request, redirect
 import os
 import datetime
 import requests
 import string
 import random
+import uuid
 
 import config as config
 import modules
@@ -29,13 +30,11 @@ def getjsontext (url):
 @app.route('/', methods=['GET'])
 def root_page():
 
-    # Get document types
+    # Generate a non-cacheable page uuid
 
-    ft = config.filetypes()
-    documents = ft.documents()
-    compressed = ft.compressed()
-
-    return render_template('index.html', doctype_list = documents, comptype_list = compressed )
+    nocache = str((uuid.uuid1()))
+    print(nocache)
+    return redirect('/webapp?nocache=' + nocache)
 
 
 @app.route('/list', methods=['GET'])
@@ -96,8 +95,6 @@ def fetch_document(u_doctype):
 
     if request.args:
 
-        print ("Arguments supplied: " + str(request.query_string))
-
         # We have some optional parameters
 
         if 'compress' in request.args:
@@ -112,10 +109,6 @@ def fetch_document(u_doctype):
     # generate the file
     if t_doctype in modules.documents.filetypes:
 
-        print ("Creating " + t_doctype)
-        print ("Compress " + str(compress))
-        print ("Malware: " + str(malware))
-
         method = getattr(modules.documents, 'doc_' + t_doctype)
         file = method(make_filename(t_doctype), sourcefile)
 
@@ -124,16 +117,13 @@ def fetch_document(u_doctype):
         returnfile = file.fullname
         returnmimetype = file.mimetype
 
-        print (returnfile)
 
         if compress:
 
-            print ('[Compressing]')
 
             u_compresstype = request.args['compress']
             t_compresstype = sanitise(u_compresstype)
 
-            print (modules.compress.filetypes)
 
             if t_compresstype in modules.compress.filetypes:
 
@@ -142,7 +132,6 @@ def fetch_document(u_doctype):
                 compressedfile = method(returnfile, osfilepath)
                 returnfile = compressedfile.fullname
                 returnmimetype = compressedfile.mimetype
-                print("Compressed to: " + compressedfile.fullname)
                 osfilepath = config.filespath() + compressedfile.fullname
 
         exists = os.path.isfile(osfilepath)
@@ -153,7 +142,41 @@ def fetch_document(u_doctype):
     return make_response(jsonify('error','file generation failed'), 500)
 
 
+@app.route('/webapp', methods=['GET'])
+def webapp():
 
+    # Get document types
+
+
+    if request.args:
+
+        # We have some optional parameters
+
+        if 'nocache' in request.args:
+
+            documents = modules.documents.filetypes
+            compressed = modules.compress.filetypes
+
+            return render_template('index.html', doctype_list = documents, comptype_list = compressed)
+
+    else:
+
+        # Generate a non-cacheable page uuid
+
+        nocache = str((uuid.uuid1()))
+        print (nocache)
+        return redirect('/webapp?nocache=' + nocache)
+
+@app.after_request
+def add_header(r):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0'"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    return r
 
 
 # Main Application Loop

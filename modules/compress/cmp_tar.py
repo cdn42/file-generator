@@ -1,4 +1,5 @@
 import config as config
+import os
 
 class cmp_tar:
 
@@ -15,6 +16,6 @@ class cmp_tar:
         import tarfile
 
         tar = tarfile.open(self.ospath, "w")
-        tar.add(sourcefile)
+        tar.add(sourcefile, arcname=os.path.basename(sourcefile))
         tar.close()
 

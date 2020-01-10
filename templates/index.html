@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Proxy Test</title>
+
+    <link rel="stylesheet" href="/static/select.css">
+    <script src="/static/js_utils.js"></script>
+</head>
+<body>
+
+
+    <fieldset>
+<div class="rTable">
+    <div class="rTableRow">
+    <div class="rTableHeading" align="center">
+
+        <h1>File Generator</h1>
+
+    </div>
+    </div>
+
+    <div class="rTableRow">
+
+        <div class="rTableCell">
+
+            <select id="select_doctype" onchange="if (this.selectedIndex) rebuild_url();">
+            {% for doctype in doctype_list %}
+
+                <option value="{{ doctype }}">{{ doctype }}</option>
+
+            {% endfor %}
+            </select>
+        </div>
+        <div class="rTableCell">
+
+            <select id="select_compress" onchange="if (this.selectedIndex) rebuild_url();">
+                <option value="None" selected="selected">None</option>
+            {% for comptype in comptype_list %}
+
+                <option value="{{ comptype }}">{{ comptype }}</option>
+
+            {% endfor %}
+            </select>
+        </div>
+        <div class="rTableCell"><a id="dl_link" onclick="download_url()">Download in Browser</a>
+        </div>
+        <div class="rTableCell"><a id="email_it" onclick="download_url()">Send via Email</a>
+        </div>
+    </div>
+
+</div>
+</fieldset>
+
+<input type="hidden" id="urlstore" >
+<script>rebuild_url()</script>
+</body>
+</html>
